@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>SPLAT! Photo Splat</title>
+<meta name="description" content="Throw eggs and tomatoes at your photos, take aim, and have fun!">
+<meta name="theme-color" content="#e2483a">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+
+<!--
+  AD SETUP - Google H5 Games Ads
+  1) Open an account at https://www.google.com/adsense/. Once approved, you'll
+     get a publisher ID in the form "ca-pub-XXXXXXXXXXXXXXXX".
+  2) Replace the data-ad-client value below with YOUR OWN ID.
+  3) If you publish without changing the ID, ads simply won't show (no error) -
+     they silently stay disabled and the app keeps working normally.
+-->
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"
+        data-ad-client="ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cream:#FFF4D6;
+    --wall:#F7E6B8;
+    --ink:#2B2118;
+    --egg-yolk:#FFD84D;
+    --egg-white:#FFFDF5;
+    --tomato:#E2483A;
+    --tomato-dark:#B8362B;
+    --leaf:#4C9A5B;
+    --orange:#F2A65A;
+    --scale:1;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; padding:0; height:100%; overflow:hidden; background:var(--cream); font-family:'Nunito',sans-serif; color:var(--ink); overscroll-behavior:none;}
+  h1,h2,.display{font-family:'Baloo 2',cursive;}
+
+  #app{position:fixed; inset:0; display:flex; flex-direction:column;}
+
+  /* ---------- SETUP SCREEN ---------- */
+  #setup{
+    flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    padding:24px; text-align:center; gap:16px;
+    background:
+      radial-gradient(circle at 15% 20%, rgba(226,72,58,.08) 0, transparent 40%),
+      radial-gradient(circle at 85% 75%, rgba(255,216,77,.18) 0, transparent 45%),
+      var(--cream);
+  }
+  .logo-row{display:flex; align-items:center; justify-content:center; gap:6px; font-size:44px; margin-bottom:-6px;}
+  .logo-row span{filter:drop-shadow(0 4px 6px rgba(0,0,0,.15));}
+  #setup h1{font-size:34px; margin:0; letter-spacing:.5px; color:var(--tomato-dark);}
+  #setup p.sub{margin:0 0 8px; font-size:15px; color:#6b5c48; max-width:320px; line-height:1.5;}
+
+  .pick-card{
+    width:100%; max-width:340px; background:#fff; border:3px solid var(--ink);
+    border-radius:20px; padding:16px; box-shadow:6px 6px 0 var(--ink);
+    display:flex; flex-direction:column; gap:10px;
+  }
+  .pick-btn{
+    display:flex; align-items:center; gap:10px; justify-content:center;
+    padding:14px 16px; border-radius:14px; border:2.5px solid var(--ink);
+    background:var(--egg-yolk); color:var(--ink); font-family:'Baloo 2';
+    font-size:17px; font-weight:700; cursor:pointer; transition:transform .12s;
+  }
+  .pick-btn:active{transform:scale(.96);}
+  .pick-btn.secondary{background:#fff;}
+  .pick-btn .count-pill{
+    background:var(--ink); color:#fff; font-size:12px; padding:2px 8px; border-radius:999px; font-family:'Nunito'; font-weight:800;
+  }
+  #thumbRow{display:flex; gap:6px; flex-wrap:wrap; justify-content:center; min-height:0;}
+  .thumb-item{position:relative; width:44px; height:44px; flex-shrink:0;}
+  .thumb-item img{width:44px; height:44px; object-fit:cover; border-radius:8px; border:2px solid var(--ink); display:block;}
+  .thumb-remove{
+    position:absolute; top:-7px; right:-7px; width:19px; height:19px; border-radius:50%;
+    background:var(--tomato); color:#fff; border:2px solid #fff; font-size:11px; line-height:1;
+    display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0;
+  }
+  #thumbHint{font-size:11.5px; color:#8a7f68; text-align:center;}
+  #clearPhotosLink{text-decoration:underline; cursor:pointer;}
+
+  #startBtn{
+    margin-top:4px; width:100%; max-width:340px; padding:16px; border:none; border-radius:16px;
+    background:var(--tomato); color:#fff; font-family:'Baloo 2'; font-size:20px; font-weight:800;
+    box-shadow:0 5px 0 var(--tomato-dark); cursor:pointer; transition:transform .1s, box-shadow .1s;
+  }
+  #startBtn:disabled{background:#d8cdb4; box-shadow:0 5px 0 #b9ae97; color:#8a7f68; cursor:not-allowed;}
+  #startBtn:not(:disabled):active{transform:translateY(4px); box-shadow:0 1px 0 var(--tomato-dark);}
+  input[type=file]{display:none;}
+
+  /* ---------- GAME SCREEN ---------- */
+  #game{flex:1; display:none; flex-direction:column; position:relative; touch-action:none; user-select:none;}
+  #topbar{
+    display:flex; align-items:center; justify-content:space-between; gap:8px;
+    padding:10px 12px; background:var(--ink); color:#fff; z-index:20; flex-wrap:wrap;
+  }
+  .stat{display:flex; align-items:center; gap:4px; font-family:'Baloo 2'; font-size:15px; background:rgba(255,255,255,.08); padding:5px 10px; border-radius:999px;}
+  .stat b{font-size:16px;}
+  #iconBtns{display:flex; gap:6px;}
+  .iconbtn{
+    width:34px; height:34px; border-radius:10px; border:none; background:rgba(255,255,255,.12);
+    color:#fff; font-size:16px; display:flex; align-items:center; justify-content:center; cursor:pointer;
+  }
+  .iconbtn:active{background:rgba(255,255,255,.25);}
+
+  #messWrap{padding:6px 12px; background:#3a2c1e; z-index:20;}
+  #messLabel{font-size:11px; color:#e9dcc0; font-family:'Baloo 2'; display:flex; justify-content:space-between; margin-bottom:3px;}
+  #messBar{height:8px; border-radius:99px; background:#5a4633; overflow:hidden;}
+  #messFill{height:100%; width:0%; background:linear-gradient(90deg,var(--egg-yolk),var(--tomato)); transition:width .4s ease;}
+
+  #stage{
+    flex:1; position:relative; overflow:hidden;
+    background:
+      repeating-linear-gradient(45deg, rgba(0,0,0,.025) 0 2px, transparent 2px 18px),
+      linear-gradient(180deg, var(--wall), #EBD79E);
+    display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:16px; padding:14px 12px 8px;
+  }
+  .target-wrap{
+    position:relative;
+    filter:drop-shadow(0 8px 10px rgba(0,0,0,.22));
+  }
+  .target{
+    position:relative; width:min(58vw,270px); height:min(58vw,270px); border-radius:14px;
+    overflow:hidden; border:7px solid #fff; background:#ddd; box-shadow:0 0 0 2px var(--ink);
+  }
+  /* Single photo: one large target that fills as much of the screen as possible */
+  #stage.count-1{ padding:10px 10px 4px; gap:0; }
+  #stage.count-1 .target{ width:min(92vw,520px); height:min(64vh,520px); border-width:10px; border-radius:18px; }
+  /* Two photos: a bit smaller but still large */
+  #stage.count-2 .target{ width:min(44vw,240px); height:min(44vw,240px); }
+  /* Three or more: compact grid */
+  #stage.count-many .target{ width:min(30vw,165px); height:min(30vw,165px); border-width:5px; border-radius:10px; }
+
+  .target img{width:100%; height:100%; object-fit:cover; display:block; pointer-events:none;}
+  .tape{
+    position:absolute; top:-10px; left:50%; transform:translateX(-50%) rotate(-3deg);
+    width:60px; height:22px; background:rgba(255,255,255,.75); border:1px solid rgba(0,0,0,.08);
+  }
+  #stage.count-1 .tape{ width:90px; height:30px; top:-14px; }
+  .crack-overlay{position:absolute; inset:0; pointer-events:none;}
+
+  .splat{position:absolute; pointer-events:none; transform:translate(-50%,-50%); z-index:5; animation:splatPop .32s cubic-bezier(.2,1.6,.4,1); transition:opacity .35s ease;}
+  .splat svg{display:block;}
+  .splat.fading{opacity:0;}
+  @keyframes splatPop{
+    0%{ transform:translate(-50%,-50%) scale(0.2) rotate(var(--rot,0deg)); opacity:0; }
+    55%{ transform:translate(-50%,-50%) scale(1.25) rotate(var(--rot,0deg)); opacity:1; }
+    100%{ transform:translate(-50%,-50%) scale(1) rotate(var(--rot,0deg)); opacity:1; }
+  }
+
+  /* impact flash - an instant effect that always reads clearly on every hit */
+  .impact-ring{
+    position:fixed; z-index:400; pointer-events:none; border-radius:50%;
+    transform:translate(-50%,-50%); border:5px solid #fff; mix-blend-mode:overlay;
+    animation:ringOut .45s ease-out forwards;
+    --ring-scale: 1;
+  }
+  @keyframes ringOut{
+    0%{ width:10px; height:10px; opacity:.95; border-width:8px; }
+    100%{ width:calc(140px * var(--ring-scale)); height:calc(140px * var(--ring-scale)); opacity:0; border-width:1px; }
+  }
+  .impact-flash{
+    position:absolute; inset:0; pointer-events:none; z-index:6; opacity:0;
+    animation:flashOut .28s ease-out forwards;
+  }
+  @keyframes flashOut{ 0%{ opacity:.55; } 100%{ opacity:0; } }
+
+  #aimline{position:fixed; inset:0; pointer-events:none; z-index:15;}
+
+  #bottombar{
+    z-index:20; display:flex; align-items:center; gap:10px;
+    padding:14px 16px calc(14px + env(safe-area-inset-bottom)); background:var(--ink);
+    overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none;
+  }
+  #bottombar::-webkit-scrollbar{display:none;}
+  #bottombar-inner{display:flex; gap:10px; margin:0 auto; padding:0 4px;}
+  .weapon{
+    width:62px; height:62px; border-radius:50%; border:3px solid #fff; font-size:27px;
+    display:flex; align-items:center; justify-content:center; cursor:pointer; position:relative;
+    box-shadow:0 4px 0 rgba(0,0,0,.35); transition:transform .1s; flex-shrink:0;
+  }
+  .weapon.egg{background:var(--egg-yolk);}
+  .weapon.tomato{background:var(--tomato);}
+  .weapon.poop{background:#a9714a;}
+  .weapon.paint{background:conic-gradient(from 0deg, #ff5e5e, #ffd84d, #4cc9f0, #7b5cff, #ff5e5e);}
+  .weapon.cake{background:linear-gradient(160deg, #ffd9e8 55%, #fff 55%);}
+  .weapon.active{outline:3px solid #fff; transform:translateY(-4px); box-shadow:0 8px 0 rgba(0,0,0,.35);}
+  .weapon .badge{position:absolute; bottom:-6px; right:-6px; background:#fff; color:var(--ink); font-family:'Baloo 2'; font-size:12px; padding:2px 6px; border-radius:999px; border:2px solid var(--ink);}
+  #hint{color:#e9dcc0; font-family:'Baloo 2'; font-size:12.5px; text-align:center; padding:0 10px 6px; z-index:20;}
+
+  #rewardAdBtn{
+    display:block; margin:0 auto 8px; padding:8px 16px; border:none; border-radius:999px;
+    background:linear-gradient(90deg,#FFD84D,#FFB84D); color:var(--ink); font-family:'Baloo 2';
+    font-weight:800; font-size:13px; box-shadow:0 3px 0 #C98A1F; cursor:pointer; z-index:20;
+  }
+  #rewardAdBtn:active{ transform:translateY(2px); box-shadow:0 1px 0 #C98A1F; }
+  #rewardAdBtn.hidden{ display:none; }
+
+  /* Gold Mode - temporary visual bonus after watching a rewarded ad */
+  #stage.gold-mode{ box-shadow: inset 0 0 40px 6px rgba(255,216,77,.55); }
+  #stage.gold-mode .target{ box-shadow:0 0 0 2px var(--ink), 0 0 18px 4px rgba(255,216,77,.6); }
+
+  /* projectile flying */
+  .projectile{position:fixed; font-size:26px; z-index:500; pointer-events:none; will-change:transform; transform:translate(-50%,-50%);}
+
+  .miss-text{position:fixed; z-index:501; font-family:'Baloo 2'; font-weight:800; font-size:18px; color:var(--ink);
+    background:#fff; border:2px solid var(--ink); padding:4px 10px; border-radius:999px; transform:translate(-50%,-50%);
+    animation:missFloat .7s ease-out forwards; pointer-events:none;}
+  @keyframes missFloat{ to{ transform:translate(-50%,-140%) scale(1.15); opacity:0; } }
+
+  .hit-text{position:fixed; z-index:501; font-family:'Baloo 2'; font-weight:800; font-size:20px; color:#fff;
+    -webkit-text-stroke:2px var(--ink); transform:translate(-50%,-50%);
+    animation:hitFloat .8s ease-out forwards; pointer-events:none;}
+  @keyframes hitFloat{ to{ transform:translate(-50%,-160%) scale(1.3); opacity:0; } }
+
+  #shake-target{transition:transform .1s;}
+
+  #musicToast{position:fixed; bottom:110px; left:50%; transform:translateX(-50%); background:var(--ink); color:#fff;
+    padding:8px 14px; border-radius:999px; font-family:'Baloo 2'; font-size:13px; z-index:600; opacity:0; transition:opacity .3s;}
+
+  ::-webkit-scrollbar{display:none;}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ============ SETUP ============ -->
+  <section id="setup">
+    <div class="logo-row"><span>🍅</span><span>🥚</span></div>
+    <h1>SPLAT!</h1>
+    <p class="sub">Pick your photos, take aim, and throw eggs and tomatoes! Tap "Pick Photos" as many times as you like - each pick adds to the previous ones.</p>
+
+    <div class="pick-card">
+      <button class="pick-btn" id="pickPhotosBtn">📷 Pick Photos <span class="count-pill" id="photoCountPill">0</span></button>
+      <div id="thumbRow"></div>
+      <div id="thumbHint" style="display:none">Pick again as many times as you like, they'll all be added · <span id="clearPhotosLink">clear all</span></div>
+      <button class="pick-btn secondary" id="pickMusicBtn">🎵 Add Music <span class="count-pill" id="musicPill" style="display:none">✓</span></button>
+    </div>
+
+    <button id="startBtn" disabled>🎯 Start Game</button>
+
+    <input type="file" id="photoInput" accept="image/*" multiple>
+    <input type="file" id="musicInput" accept="audio/*">
+  </section>
+
+  <!-- ============ GAME ============ -->
+  <section id="game">
+    <div id="topbar">
+      <div class="stat">🥚 <b id="eggCount">0</b></div>
+      <div class="stat">🍅 <b id="tomatoCount">0</b></div>
+      <div class="stat">💩 <b id="poopCount">0</b></div>
+      <div class="stat">🎯 <b id="hitCount">0</b>/<span id="throwCount">0</span></div>
+      <div id="iconBtns">
+        <button class="iconbtn" id="musicToggleBtn" title="Music">🔇</button>
+        <button class="iconbtn" id="wipeBtn" title="Clear Photo">🧹</button>
+        <button class="iconbtn" id="resetBtn" title="Reset">↺</button>
+        <button class="iconbtn" id="changePhotosBtn" title="New Photo">📷</button>
+      </div>
+    </div>
+    <div id="messWrap">
+      <div id="messLabel"><span>MESS LEVEL</span><span id="messPct">0%</span></div>
+      <div id="messBar"><div id="messFill"></div></div>
+    </div>
+
+    <div id="stage"></div>
+    <div id="hint">Tap the screen to throw at the target</div>
+    <button id="rewardAdBtn" type="button">🎬 Watch an ad, ✨ earn Gold Mode (20s)</button>
+
+    <div id="bottombar">
+      <div id="bottombar-inner">
+        <div class="weapon egg active" id="weaponEgg" data-type="egg">🥚<span class="badge">1</span></div>
+        <div class="weapon tomato" id="weaponTomato" data-type="tomato">🍅<span class="badge">2</span></div>
+        <div class="weapon poop" id="weaponPoop" data-type="poop">💩<span class="badge">3</span></div>
+        <div class="weapon paint" id="weaponPaint" data-type="paint">🎨<span class="badge">4</span></div>
+        <div class="weapon cake" id="weaponCake" data-type="cake">🍰<span class="badge">5</span></div>
+      </div>
+    </div>
+  </section>
+
+  <div id="musicToast">🎵 Music playing</div>
+
+</div>
+
+<audio id="bgMusic" loop></audio>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---------- STATE ----------
+  let photos = [];        // array of object URLs
+  let musicFile = null;
+  let currentWeapon = "egg";
+  let eggCount = 0, tomatoCount = 0, poopCount = 0, hitCount = 0, throwCount = 0;
+  let totalHitsSinceShuffle = 0;
+  const splatsByTarget = {}; // idx -> [elements]
+
+  const $ = (id) => document.getElementById(id);
+
+  // ---------- IMPACT SOUND EFFECTS (generated live with the Web Audio API, no files needed) ----------
+  let audioCtx = null;
+  let noiseBuffer = null;
+  let sfxMaster = null;
+
+  function getAudioCtx(){
+    if (!audioCtx){
+      try {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        // limiter so rapid-fire hits stacking up don't cause audio clipping
+        sfxMaster = audioCtx.createDynamicsCompressor();
+        sfxMaster.threshold.value = -22;
+        sfxMaster.ratio.value = 8;
+        sfxMaster.connect(audioCtx.destination);
+      }
+      catch(e){ return null; }
+    }
+    if (audioCtx.state === "suspended") audioCtx.resume();
+    return audioCtx;
+  }
+
+  function getNoiseBuffer(ctx){
+    if (noiseBuffer) return noiseBuffer;
+    const len = ctx.sampleRate * 0.5;
+    const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
+    noiseBuffer = buf;
+    return buf;
+  }
+
+  // type: 'egg' | 'tomato' | 'poop'  |  miss: true means it hit the background, not the target
+  function playImpactSound(type, miss, power){
+    const ctx = getAudioCtx();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    power = power || 1;
+
+    const profiles = {
+      egg:    { filterType:"bandpass", freq:2200, q:1.1, dur:0.16, thud:300, thudDecay:0.13, peak:0.5 },
+      tomato: { filterType:"lowpass",  freq:900,  q:0.7, dur:0.24, thud:150, thudDecay:0.22, peak:0.6 },
+      poop:   { filterType:"lowpass",  freq:450,  q:0.5, dur:0.3,  thud:90,  thudDecay:0.3,  peak:0.55 },
+      paint:  { filterType:"lowpass",  freq:1300, q:0.9, dur:0.32, thud:110, thudDecay:0.3,  peak:0.65 },
+      cake:   { filterType:"lowpass",  freq:700,  q:0.6, dur:0.4,  thud:65,  thudDecay:0.42, peak:0.7  }
+    };
+    const p = profiles[type] || profiles.egg;
+    const gainMul = miss ? 0.35 : 1;
+
+    // wet/noise layer
+    const noise = ctx.createBufferSource();
+    noise.buffer = getNoiseBuffer(ctx);
+    const filter = ctx.createBiquadFilter();
+    filter.type = miss ? "highpass" : p.filterType;
+    filter.frequency.value = miss ? 1500 : p.freq;
+    filter.Q.value = p.q;
+    const noiseGain = ctx.createGain();
+    noiseGain.gain.setValueAtTime(p.peak * gainMul, now);
+    noiseGain.gain.exponentialRampToValueAtTime(0.001, now + p.dur);
+    noise.connect(filter).connect(noiseGain).connect(sfxMaster);
+    noise.start(now);
+    noise.stop(now + p.dur + 0.02);
+
+    // low "thud" impact
+    const osc = ctx.createOscillator();
+    osc.type = "sine";
+    const oscGain = ctx.createGain();
+    osc.frequency.setValueAtTime(p.thud * (miss ? 2.2 : 1.6), now);
+    osc.frequency.exponentialRampToValueAtTime(p.thud * 0.5, now + p.thudDecay);
+    oscGain.gain.setValueAtTime(p.peak * 0.8 * gainMul, now);
+    oscGain.gain.exponentialRampToValueAtTime(0.001, now + p.thudDecay);
+    osc.connect(oscGain).connect(sfxMaster);
+    osc.start(now);
+    osc.stop(now + p.thudDecay + 0.02);
+
+    // extra comedic "gulp" wobble for the poop sound
+    if (type === "poop" && !miss){
+      const wob = ctx.createOscillator();
+      wob.type = "sine";
+      const wobGain = ctx.createGain();
+      wob.frequency.setValueAtTime(190, now);
+      wob.frequency.linearRampToValueAtTime(55, now + 0.26);
+      wobGain.gain.setValueAtTime(0.3, now);
+      wobGain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+      wob.connect(wobGain).connect(sfxMaster);
+      wob.start(now);
+      wob.stop(now + 0.32);
+    }
+
+    // extra deep "boom" sub-layer for powerful weapons (paint bomb, giant cake)
+    if (!miss && power >= 1.9){
+      const sub = ctx.createOscillator();
+      sub.type = "sine";
+      const subGain = ctx.createGain();
+      sub.frequency.setValueAtTime(70, now);
+      sub.frequency.exponentialRampToValueAtTime(28, now + 0.35);
+      subGain.gain.setValueAtTime(0.55 * Math.min(power/2.4, 1), now);
+      subGain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+      sub.connect(subGain).connect(sfxMaster);
+      sub.start(now);
+      sub.stop(now + 0.42);
+    }
+
+    // giant cake - a short rising three-note chime for a celebratory feel (ta-da!)
+    if (type === "cake" && !miss){
+      const notes = [523, 659, 784];
+      notes.forEach((f, i) => {
+        const t0 = now + 0.06 + i * 0.075;
+        const chime = ctx.createOscillator();
+        chime.type = "triangle";
+        const chimeGain = ctx.createGain();
+        chime.frequency.setValueAtTime(f, t0);
+        chimeGain.gain.setValueAtTime(0.0001, t0);
+        chimeGain.gain.linearRampToValueAtTime(0.22, t0 + 0.02);
+        chimeGain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.22);
+        chime.connect(chimeGain).connect(sfxMaster);
+        chime.start(t0);
+        chime.stop(t0 + 0.24);
+      });
+    }
+  }
+
+  // ---------- SETUP SCREEN LOGIC ----------
+  const photoInput = $("photoInput");
+  const musicInput = $("musicInput");
+  const pickPhotosBtn = $("pickPhotosBtn");
+  const pickMusicBtn = $("pickMusicBtn");
+  const thumbRow = $("thumbRow");
+  const thumbHint = $("thumbHint");
+  const clearPhotosLink = $("clearPhotosLink");
+  const photoCountPill = $("photoCountPill");
+  const musicPill = $("musicPill");
+  const startBtn = $("startBtn");
+
+  pickPhotosBtn.addEventListener("click", () => { photoInput.value = ""; photoInput.click(); });
+  pickMusicBtn.addEventListener("click", () => { musicInput.value = ""; musicInput.click(); });
+
+  function renderThumbs(){
+    thumbRow.innerHTML = "";
+    photos.forEach((url, i) => {
+      const item = document.createElement("div");
+      item.className = "thumb-item";
+      item.innerHTML = `<img src="${url}"><button type="button" class="thumb-remove" data-i="${i}">×</button>`;
+      thumbRow.appendChild(item);
+    });
+    thumbRow.querySelectorAll(".thumb-remove").forEach(btn => {
+      btn.addEventListener("click", () => {
+        photos.splice(Number(btn.dataset.i), 1);
+        renderThumbs();
+      });
+    });
+    photoCountPill.textContent = photos.length;
+    startBtn.disabled = photos.length === 0;
+    thumbHint.style.display = photos.length > 0 ? "block" : "none";
+  }
+
+  clearPhotosLink.addEventListener("click", () => {
+    photos = [];
+    renderThumbs();
+  });
+
+  photoInput.addEventListener("change", (e) => {
+    // Even if the gallery app only allows a single selection, every pick is
+    // ADDED TO the previous ones - so the user can reliably build up several
+    // photos by tapping "Pick Photos" a few times.
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+    const newUrls = files.map(f => URL.createObjectURL(f));
+    photos = photos.concat(newUrls);
+    renderThumbs();
+  });
+
+  musicInput.addEventListener("change", (e) => {
+    const f = e.target.files && e.target.files[0];
+    if (!f) return;
+    musicFile = URL.createObjectURL(f);
+    musicPill.style.display = "inline-block";
+    musicPill.textContent = "✓ Added";
+    pickMusicBtn.style.background = "#c9e8c0"; // clearly show it's selected
+    const shortName = f.name.length > 22 ? f.name.slice(0,19) + "…" : f.name;
+    pickMusicBtn.firstChild.textContent = "🎵 " + shortName + " ";
+    $("bgMusic").src = musicFile;
+  });
+
+  startBtn.addEventListener("click", startGame);
+
+  // ---------- GAME SCREEN ----------
+  const setupSection = $("setup");
+  const gameSection = $("game");
+  const stage = $("stage");
+  const bgMusic = $("bgMusic");
+  const musicToggleBtn = $("musicToggleBtn");
+
+  function startGame(){
+    setupSection.style.display = "none";
+    gameSection.style.display = "flex";
+    buildTargets();
+    if (musicFile){
+      tryPlayMusic();
+    }
+  }
+
+  function tryPlayMusic(){
+    const p = bgMusic.play();
+    if (p && typeof p.then === "function"){
+      p.then(() => {
+        musicToggleBtn.textContent = "🔊";
+        showToast();
+      }).catch(() => {
+        // Some browsers (especially mobile) block autoplaying audio.
+        // Retry as soon as the user taps the screen for the first time.
+        musicToggleBtn.textContent = "🔇";
+        hint("Tap the screen once to start the music 🎵");
+        const retry = () => {
+          bgMusic.play().then(() => { musicToggleBtn.textContent = "🔊"; }).catch(() => {});
+          document.removeEventListener("pointerdown", retry);
+        };
+        document.addEventListener("pointerdown", retry, { once: true });
+      });
+    }
+  }
+
+  function buildTargets(){
+    stage.innerHTML = "";
+    stage.classList.remove("count-1", "count-2", "count-many");
+    if (photos.length === 1) stage.classList.add("count-1");
+    else if (photos.length === 2) stage.classList.add("count-2");
+    else stage.classList.add("count-many");
+
+    for (const k in splatsByTarget) delete splatsByTarget[k];
+
+    photos.forEach((url, i) => {
+      const wrap = document.createElement("div");
+      wrap.className = "target-wrap";
+      wrap.style.order = i;
+      wrap.innerHTML = `
+        <div class="tape"></div>
+        <div class="target" data-idx="${i}">
+          <img src="${url}" draggable="false">
+        </div>`;
+      stage.appendChild(wrap);
+      splatsByTarget[i] = [];
+    });
+  }
+
+  // weapon selection - manages all .weapon elements by their data-type
+  const weaponEls = Array.from(document.querySelectorAll(".weapon"));
+  function selectWeapon(type){
+    currentWeapon = type;
+    weaponEls.forEach(el => el.classList.toggle("active", el.dataset.type === type));
+  }
+  weaponEls.forEach(el => el.addEventListener("click", () => selectWeapon(el.dataset.type)));
+
+
+  // ---------- THROWING (hold down = rapid fire) ----------
+  let isHolding = false;
+  let holdX = 0, holdY = 0;
+  let fireTimer = null;
+  const FIRE_INTERVAL_MS = 130; // how often a shot fires while held down
+
+  function fireOnce(){
+    // slight random spread during rapid fire - gives it a real gun feel
+    const jitter = isHolding ? 16 : 0;
+    const jx = holdX + (jitter ? (Math.random()*jitter*2 - jitter) : 0);
+    const jy = holdY + (jitter ? (Math.random()*jitter*2 - jitter) : 0);
+    throwProjectile(jx, jy, currentWeapon);
+  }
+
+  function startHolding(e){
+    e.preventDefault();
+    getAudioCtx(); // start the audio engine on user touch (browser autoplay restriction)
+    isHolding = true;
+    holdX = e.clientX; holdY = e.clientY;
+    try { stage.setPointerCapture(e.pointerId); } catch(_){}
+    fireOnce();
+    clearInterval(fireTimer);
+    fireTimer = setInterval(fireOnce, FIRE_INTERVAL_MS);
+  }
+
+  function stopHolding(){
+    isHolding = false;
+    clearInterval(fireTimer);
+    fireTimer = null;
+  }
+
+  stage.addEventListener("pointerdown", startHolding);
+  stage.addEventListener("pointermove", (e) => {
+    if (!isHolding) return;
+    holdX = e.clientX; holdY = e.clientY;
+  });
+  stage.addEventListener("pointerup", stopHolding);
+  stage.addEventListener("pointercancel", stopHolding);
+  stage.addEventListener("pointerleave", stopHolding);
+  window.addEventListener("blur", stopHolding);
+
+  // Each weapon's emoji and relative "power" - effect size, screen shake and sound scale off this
+  const WEAPON_CONFIG = {
+    egg:    { emoji: "🥚", power: 1.0 },
+    tomato: { emoji: "🍅", power: 1.25 },
+    poop:   { emoji: "💩", power: 1.5 },
+    paint:  { emoji: "🎨", power: 2.1 },
+    cake:   { emoji: "🍰", power: 2.9 }
+  };
+
+  function throwProjectile(x, y, type){
+    throwCount++;
+    $("throwCount").textContent = throwCount;
+    if (type === "egg"){ eggCount++; $("eggCount").textContent = eggCount; }
+    else if (type === "tomato"){ tomatoCount++; $("tomatoCount").textContent = tomatoCount; }
+    else if (type === "poop"){ poopCount++; $("poopCount").textContent = poopCount; }
+    // paint bomb and giant cake - counted in the throw total, no separate counter shown (limited space)
+
+    const proj = document.createElement("div");
+    proj.className = "projectile";
+    proj.textContent = (WEAPON_CONFIG[type] && WEAPON_CONFIG[type].emoji) || "🥚";
+    document.body.appendChild(proj);
+
+    // Start each throw from a slightly different point - so during rapid fire
+    // multiple projectiles clearly read as separate shots instead of overlapping on one line.
+    const startX = window.innerWidth / 2 + (Math.random()*90 - 45);
+    const startY = window.innerHeight + 40;
+    proj.style.left = startX + "px";
+    proj.style.top = startY + "px";
+
+    const dx = x - startX;
+    const dy = y - startY;
+    // slight sideways drift mid-arc - gives it a real throwing-arc feel
+    const midX = dx * 0.5 + (Math.random()*50 - 25);
+    const midY = dy * 0.6;
+    const spin = (Math.random()*520 - 260) | 0;
+    const duration = 380 + Math.random()*60;
+    const power = (WEAPON_CONFIG[type] && WEAPON_CONFIG[type].power) || 1;
+    const peakScale = 1.15 * Math.min(power, 1.6); // powerful weapons also look bigger mid-flight
+    const endScale = 1 * Math.min(power, 1.4);
+
+    const anim = proj.animate([
+      { transform: "translate(-50%,-50%) scale(0.55) rotate(0deg)", offset: 0 },
+      { transform: `translate(calc(-50% + ${midX}px), calc(-50% + ${midY}px)) scale(${peakScale.toFixed(2)}) rotate(${spin*0.5}deg)`, offset: 0.55 },
+      { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(${endScale.toFixed(2)}) rotate(${spin}deg)`, offset: 1 }
+    ], { duration, easing: "cubic-bezier(.33,.6,.35,1)", fill: "forwards" });
+
+    anim.onfinish = () => {
+      proj.remove();
+      resolveHit(x, y, type);
+    };
+  }
+
+  function resolveHit(x, y, type){
+    const targets = document.querySelectorAll(".target");
+    let hitEl = null, rect = null;
+    for (const t of targets){
+      const r = t.getBoundingClientRect();
+      if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom){
+        hitEl = t; rect = r; break;
+      }
+    }
+    if (!hitEl){
+      spawnMissText(x, y);
+      playImpactSound(type, true);
+      return;
+    }
+    hitCount++; totalHitsSinceShuffle++;
+    $("hitCount").textContent = hitCount;
+    const power = (WEAPON_CONFIG[type] && WEAPON_CONFIG[type].power) || 1;
+    spawnImpactRing(x, y, type, power);
+    spawnSplat(hitEl, x - rect.left, y - rect.top, type, power);
+    spawnHitText(x, y, type);
+    shakeTarget(hitEl, power);
+    shakeScreen(power);
+    updateMess();
+    playImpactSound(type, false, power);
+
+    // Only when there are multiple photos: size stays FIXED but targets
+    // shuffle positions now and then to keep aiming fun.
+    if (photos.length > 1 && totalHitsSinceShuffle > 0 && totalHitsSinceShuffle % 6 === 0){
+      shuffleTargets();
+    }
+  }
+
+  function shakeTarget(el, power){
+    const wrap = el.parentElement;
+    const amp = 4 * Math.min(power || 1, 2.4); // powerful weapons shake the target more
+    wrap.animate([
+      { transform: `rotate(0deg)` },
+      { transform: `rotate(${-amp}deg)` },
+      { transform: `rotate(${amp*0.75}deg)` },
+      { transform: `rotate(0deg)` }
+    ], { duration: 260 });
+  }
+
+  // For powerful weapons (paint bomb, giant cake) the whole screen shakes slightly
+  function shakeScreen(power){
+    if (power < 1.9) return;
+    const amp = Math.min((power - 1.5) * 6, 10);
+    gameSection.animate([
+      { transform: "translate(0,0)" },
+      { transform: `translate(${amp}px,${-amp*0.6}px)` },
+      { transform: `translate(${-amp*0.7}px,${amp*0.5}px)` },
+      { transform: "translate(0,0)" }
+    ], { duration: 220, easing: "ease-out" });
+  }
+
+  function shuffleTargets(){
+    const wraps = Array.from(document.querySelectorAll(".target-wrap"));
+    wraps.forEach(w => w.style.order = Math.floor(Math.random()*1000));
+    hint("Targets shuffled! Refresh your aim 🎯");
+  }
+
+  function updateMess(){
+    const pct = Math.min(100, Math.round((hitCount / 30) * 100));
+    $("messFill").style.width = pct + "%";
+    $("messPct").textContent = pct + "%";
+  }
+
+  // ---------- VISUAL EFFECTS ----------
+  // Generates an irregular (organic) blob path - looks far more realistic than a circle
+  function blobPath(radius, jag){
+    const pts = 10;
+    let d = "";
+    const coords = [];
+    for (let i=0;i<pts;i++){
+      const a = (i/pts)*Math.PI*2;
+      const r = radius * (1 - jag/2 + Math.random()*jag);
+      coords.push([Math.cos(a)*r, Math.sin(a)*r]);
+    }
+    d = `M ${coords[0][0]} ${coords[0][1]} `;
+    for (let i=1;i<=pts;i++){
+      const c = coords[i % pts];
+      const prev = coords[(i-1) % pts];
+      const mx = (prev[0]+c[0])/2, my = (prev[1]+c[1])/2;
+      d += `Q ${prev[0]} ${prev[1]} ${mx} ${my} `;
+    }
+    d += "Z";
+    return d;
+  }
+
+  function splatSVG(type, power){
+    power = power || 1;
+    const hue = Math.floor(Math.random()*360); // paint bomb gets a different color every time
+    const palette = {
+      egg:    { base: "#FFF6D6", edge: "#FFE07A", accent: "#FFD84D" },
+      tomato: { base: "#E2483A", edge: "#B8362B", accent: "#8f231a" },
+      poop:   { base: "#8B5A2B", edge: "#5C3A1A", accent: "#B98246" },
+      paint:  { base: `hsl(${hue},80%,58%)`, edge: `hsl(${hue},70%,38%)`, accent: `hsl(${(hue+40)%360},85%,65%)` },
+      cake:   { base: "#FFF0F5", edge: "#F6B8CE", accent: "#E6567F" }
+    };
+    const c = palette[type] || palette.egg;
+    // for powerful weapons the splat body grows noticeably bigger
+    const size = (78 + Math.random()*46) * Math.min(1 + (power-1)*0.55, 2.1);
+    const half = size/2;
+
+    // main blob body
+    const mainPath = blobPath(size*0.36, 0.5);
+    // little droplets splashing outward - more of them and farther for powerful weapons
+    let speckles = "";
+    const speckleCount = Math.round((4 + Math.random()*4) * Math.min(power, 1.8));
+    for (let i=0;i<speckleCount;i++){
+      const a = Math.random()*Math.PI*2;
+      const dist = size*0.34 + Math.random()*size*0.3;
+      const sx = Math.cos(a)*dist, sy = Math.sin(a)*dist*0.9;
+      const r = size*0.03 + Math.random()*size*0.06;
+      const speckleFill = type === "paint" ? `hsl(${Math.floor(Math.random()*360)},80%,60%)` : c.base;
+      speckles += `<circle cx="${sx.toFixed(1)}" cy="${sy.toFixed(1)}" r="${r.toFixed(1)}" fill="${speckleFill}" opacity="${0.75+Math.random()*0.2}"/>`;
+    }
+    // dripping trail running downward
+    let drip = "";
+    if (Math.random() < 0.85){
+      const dx = (Math.random()*size*0.3 - size*0.15);
+      const dripLen = (size*0.35 + Math.random()*size*0.3) * Math.min(power, 1.6);
+      drip = `<path d="M ${dx} ${size*0.28} q ${size*0.06} ${dripLen*0.5} 0 ${dripLen}"
+                stroke="${c.base}" stroke-width="${(size*0.05).toFixed(1)}" stroke-linecap="round" fill="none" opacity="0.9"/>`;
+    }
+
+    let center;
+    if (type === "egg"){
+      center = `<ellipse cx="${(Math.random()*10-5).toFixed(1)}" cy="${(Math.random()*10-5).toFixed(1)}" rx="${size*0.15}" ry="${size*0.12}" fill="${c.accent}"/>`;
+    } else if (type === "poop"){
+      // classic "poop" look: stacked shrinking curved layers + stink lines
+      center = `
+        <ellipse cx="0" cy="${size*0.06}" rx="${size*0.22}" ry="${size*0.15}" fill="${c.accent}"/>
+        <ellipse cx="${(Math.random()*8-4).toFixed(1)}" cy="${-size*0.04}" rx="${size*0.15}" ry="${size*0.1}" fill="${c.accent}"/>
+        <ellipse cx="${(Math.random()*6-3).toFixed(1)}" cy="${-size*0.13}" rx="${size*0.08}" ry="${size*0.06}" fill="${c.accent}"/>
+        <path d="M ${-size*0.12} ${-size*0.34} q -3 -10 3 -16 M ${size*0.12} ${-size*0.3} q 3 -9 -2 -15"
+              stroke="#c9c9c9" stroke-width="2" stroke-linecap="round" fill="none" opacity="0.55"/>`;
+    } else if (type === "paint"){
+      // color splashes - a few different tones layered on top of each other
+      let splashes = "";
+      for (let i=0;i<3;i++){
+        const a = Math.random()*Math.PI*2, d = size*0.12*i;
+        splashes += `<circle cx="${(Math.cos(a)*d).toFixed(1)}" cy="${(Math.sin(a)*d).toFixed(1)}" r="${(size*0.12 - i*size*0.02).toFixed(1)}" fill="hsl(${(hue+i*70)%360},80%,60%)" opacity="0.8"/>`;
+      }
+      center = splashes;
+    } else if (type === "cake"){
+      // frosting layer + cherry + confetti scattered around
+      let confetti = "";
+      const colors = ["#FF5E7A","#4CC9F0","#FFD84D","#7B5CFF","#4C9A5B"];
+      for (let i=0;i<8;i++){
+        const a = Math.random()*Math.PI*2;
+        const d = size*0.4 + Math.random()*size*0.3;
+        const cx = Math.cos(a)*d, cy = Math.sin(a)*d*0.85;
+        confetti += `<rect x="${cx.toFixed(1)}" y="${cy.toFixed(1)}" width="${(size*0.05).toFixed(1)}" height="${(size*0.05).toFixed(1)}" fill="${colors[i%colors.length]}" transform="rotate(${Math.floor(Math.random()*360)} ${cx.toFixed(1)} ${cy.toFixed(1)})"/>`;
+      }
+      center = `
+        <ellipse cx="0" cy="${size*0.02}" rx="${size*0.28}" ry="${size*0.2}" fill="#fff"/>
+        <circle cx="${(Math.random()*10-5).toFixed(1)}" cy="${-size*0.02}" r="${size*0.07}" fill="${c.accent}"/>
+        ${confetti}`;
+    } else {
+      center = `<circle cx="${(Math.random()*10-5).toFixed(1)}" cy="${(Math.random()*10-5).toFixed(1)}" r="${size*0.08}" fill="${c.accent}" opacity="0.55"/>`;
+    }
+
+    return `<svg width="${size}" height="${size*1.35}" viewBox="${-half} ${-half*0.9} ${size} ${size*1.35}" style="overflow:visible">
+      ${speckles}
+      <path d="${mainPath}" fill="${c.base}" stroke="${c.edge}" stroke-width="1.5" opacity="0.96"/>
+      ${drip}
+      ${center}
+    </svg>`;
+  }
+
+  function spawnSplat(targetEl, relX, relY, type, power){
+    const idx = Number(targetEl.dataset.idx);
+    const rot = Math.floor(Math.random()*360);
+    const splat = document.createElement("div");
+    splat.className = "splat";
+    splat.style.left = relX + "px";
+    splat.style.top = relY + "px";
+    splat.style.setProperty("--rot", rot + "deg");
+    splat.style.transform = `translate(-50%,-50%) rotate(${rot}deg)`;
+    splat.innerHTML = splatSVG(type, power);
+    targetEl.appendChild(splat);
+
+    // The splat sticks permanently - it isn't auto-removed (only cleared with 🧹)
+    if (!splatsByTarget[idx]) splatsByTarget[idx] = [];
+    splatsByTarget[idx].push(splat);
+
+    // instant flash - makes every hit feel clear no matter how covered the photo already is
+    const flashColors = {
+      egg: "rgba(255,216,77,.9)",
+      tomato: "rgba(226,72,58,.9)",
+      poop: "rgba(139,90,43,.9)",
+      paint: "rgba(255,255,255,.85)",
+      cake: "rgba(255,214,235,.9)"
+    };
+    const flash = document.createElement("div");
+    flash.className = "impact-flash";
+    flash.style.background = `radial-gradient(circle at center, ${flashColors[type] || flashColors.egg}, transparent 70%)`;
+    targetEl.appendChild(flash);
+    setTimeout(() => flash.remove(), 300);
+  }
+
+  function spawnImpactRing(x, y, type, power){
+    const ringColors = { egg: "#FFD84D", tomato: "#E2483A", poop: "#8B5A2B", paint: "#7B5CFF", cake: "#E6567F" };
+    power = power || 1;
+    const ring = document.createElement("div");
+    ring.className = "impact-ring";
+    ring.style.left = x + "px";
+    ring.style.top = y + "px";
+    ring.style.borderColor = ringColors[type] || ringColors.egg;
+    // for powerful weapons the ring starts bigger and thicker
+    ring.style.setProperty("--ring-scale", Math.min(1 + (power-1)*0.5, 2.2));
+    document.body.appendChild(ring);
+    setTimeout(() => ring.remove(), 460);
+  }
+
+  function spawnMissText(x,y){
+    const el = document.createElement("div");
+    el.className = "miss-text";
+    el.textContent = "MISS! 💨";
+    el.style.left = x+"px"; el.style.top = y+"px";
+    document.body.appendChild(el);
+    setTimeout(()=>el.remove(), 700);
+  }
+
+  function spawnHitText(x,y,type){
+    const wordSets = {
+      egg: ["SPLAT!","SPLASH!","BAM!"],
+      tomato: ["SPLAT!","PLOP!","HIT!"],
+      poop: ["GROSS!","EWW!","DIRECT HIT!"],
+      paint: ["COLOR BURST!","PAINTED!","PERFECT!"],
+      cake: ["BOOM!","CAKE SMASH!","AWESOME!"]
+    };
+    const colors = { egg: "#FFD84D", tomato: "#E2483A", poop: "#8B5A2B", paint: "#7B5CFF", cake: "#E6567F" };
+    const words = wordSets[type] || wordSets.egg;
+    const el = document.createElement("div");
+    el.className = "hit-text";
+    el.textContent = words[Math.floor(Math.random()*words.length)];
+    el.style.left = x+"px"; el.style.top = y+"px";
+    el.style.color = colors[type] || colors.egg;
+    document.body.appendChild(el);
+    setTimeout(()=>el.remove(), 800);
+  }
+
+  function hint(text){
+    const h = $("hint");
+    h.textContent = text;
+    setTimeout(()=>{ h.textContent = "Tap the screen to throw at the target"; }, 1800);
+  }
+
+  function showToast(){
+    const t = $("musicToast");
+    t.style.opacity = "1";
+    setTimeout(()=> t.style.opacity = "0", 1800);
+  }
+
+  // ---------- TOP BAR CONTROLS ----------
+  musicToggleBtn.addEventListener("click", () => {
+    if (!musicFile) { hint("Add a music file first 🎵"); return; }
+    if (bgMusic.paused){ bgMusic.play(); musicToggleBtn.textContent = "🔊"; }
+    else { bgMusic.pause(); musicToggleBtn.textContent = "🔇"; }
+  });
+
+  $("resetBtn").addEventListener("click", () => {
+    maybeShowInterstitialAd(); // natural break point: on reset (shown occasionally)
+    eggCount = tomatoCount = poopCount = hitCount = throwCount = totalHitsSinceShuffle = 0;
+    $("eggCount").textContent = 0; $("tomatoCount").textContent = 0; $("poopCount").textContent = 0;
+    $("hitCount").textContent = 0; $("throwCount").textContent = 0;
+    $("messFill").style.width = "0%"; $("messPct").textContent = "0%";
+    buildTargets();
+  });
+
+  // Only clears the splats on screen, score and throw count are preserved
+  $("wipeBtn").addEventListener("click", () => {
+    document.querySelectorAll(".splat").forEach(s => s.remove());
+    for (const k in splatsByTarget) splatsByTarget[k] = [];
+    hint("Photo cleared, keep going! 🧹");
+  });
+
+  $("changePhotosBtn").addEventListener("click", () => {
+    maybeShowInterstitialAd(); // natural break point: when switching to a new photo
+    gameSection.style.display = "none";
+    setupSection.style.display = "flex";
+    bgMusic.pause();
+  });
+
+  // ---------- AD SETTINGS (Google H5 Games Ads) ----------
+  // Define adBreak/adConfig as no-op functions up front so they don't throw
+  // if called before adsbygoogle.js has loaded - once the script loads,
+  // Google overwrites these with its real implementation.
+  window.adBreak = window.adBreak || function(o){ if (o && o.adBreakDone) o.adBreakDone({breakType:o.type}); };
+  window.adConfig = window.adConfig || function(){};
+
+  adConfig({
+    preloadAdBreaks: "on",
+    sound: "on"
+  });
+
+  let resetCountSinceAd = 0;
+  const INTERSTITIAL_EVERY_N_RESETS = 3; // not every time, only now and then - stay unobtrusive
+
+  // Interstitial ad - called ONLY at natural break points
+  // (switching photos / periodic reset), never mid-throw.
+  function maybeShowInterstitialAd(){
+    resetCountSinceAd++;
+    if (resetCountSinceAd < INTERSTITIAL_EVERY_N_RESETS) return;
+    resetCountSinceAd = 0;
+    adBreak({
+      type: "next",
+      name: "break-point-ad",
+      beforeAd: () => { if (!bgMusic.paused) bgMusic.pause(); },
+      afterAd: () => { if (musicFile && musicToggleBtn.textContent === "🔊") bgMusic.play().catch(()=>{}); }
+    });
+  }
+
+  // Rewarded ad - the user taps the button voluntarily and in return
+  // earns a 20-second cosmetic "Gold Mode" bonus.
+  const rewardAdBtn = $("rewardAdBtn");
+  let goldModeTimer = null;
+
+  rewardAdBtn.addEventListener("click", () => {
+    rewardAdBtn.disabled = true;
+    adBreak({
+      type: "reward",
+      name: "gold-mode-reward",
+      beforeReward: (showAdFn) => { showAdFn(); },
+      beforeAd: () => { if (!bgMusic.paused) bgMusic.pause(); },
+      afterAd: () => { if (musicFile && musicToggleBtn.textContent === "🔊") bgMusic.play().catch(()=>{}); },
+      adDismissed: () => { rewardAdBtn.disabled = false; },
+      adViewed: () => { activateGoldMode(); rewardAdBtn.disabled = false; }
+    });
+  });
+
+  function activateGoldMode(){
+    stage.classList.add("gold-mode");
+    hint("✨ Gold Mode active! Every hit glows for 20 seconds");
+    clearTimeout(goldModeTimer);
+    goldModeTimer = setTimeout(() => stage.classList.remove("gold-mode"), 20000);
+  }
+
+  // ---------- PWA SERVICE WORKER ----------
+  if ("serviceWorker" in navigator){
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("service-worker.js").catch(()=>{});
+    });
+  }
+})();
+</script>
+</body>
+</html>
