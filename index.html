@@ -171,14 +171,14 @@
   #aimline{position:fixed; inset:0; pointer-events:none; z-index:15;}
 
   #bottombar{
-    z-index:20; display:flex; align-items:center; gap:10px;
-    padding:14px 16px calc(14px + env(safe-area-inset-bottom)); background:var(--ink);
+    z-index:20; display:flex; align-items:center; justify-content:center; gap:clamp(4px,2vw,10px);
+    padding:14px 10px calc(14px + env(safe-area-inset-bottom)); background:var(--ink);
     overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none;
   }
   #bottombar::-webkit-scrollbar{display:none;}
-  #bottombar-inner{display:flex; gap:10px; margin:0 auto; padding:0 4px;}
+  #bottombar-inner{display:flex; gap:clamp(4px,2vw,10px); margin:0 auto; padding:0 4px; width:100%; justify-content:space-between; max-width:400px;}
   .weapon{
-    width:62px; height:62px; border-radius:50%; border:3px solid #fff; font-size:27px;
+    width:clamp(44px,15vw,62px); height:clamp(44px,15vw,62px); border-radius:50%; border:3px solid #fff; font-size:clamp(18px,6.5vw,27px);
     display:flex; align-items:center; justify-content:center; cursor:pointer; position:relative;
     box-shadow:0 4px 0 rgba(0,0,0,.35); transition:transform .1s; flex-shrink:0;
   }
