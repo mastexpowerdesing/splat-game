@@ -89,22 +89,18 @@
   }
   #startBtn:disabled{background:#d8cdb4; box-shadow:0 5px 0 #b9ae97; color:#8a7f68; cursor:not-allowed;}
   #startBtn:not(:disabled):active{transform:translateY(4px); box-shadow:0 1px 0 var(--tomato-dark);}
+  #coffeeLink{
+    display:block; margin-top:10px; text-align:center; color:#8a7f68; font-family:'Baloo 2';
+    font-size:14px; text-decoration:none;
+  }
+  #coffeeLink:hover{ text-decoration:underline; }
   input[type=file]{display:none;}
 
-  #coffeeLink{
-    margin-top:6px; display:inline-flex; align-items:center; gap:6px;
-    padding:9px 16px; border-radius:999px; border:2px solid var(--ink);
-    background:#fff; color:var(--ink); font-family:'Baloo 2'; font-size:13.5px;
-    font-weight:700; text-decoration:none; box-shadow:2px 2px 0 var(--ink);
-    transition:transform .1s;
-  }
-  #coffeeLink:active{transform:scale(.96);}
-
   /* ---------- GAME SCREEN ---------- */
-  #game{flex:1; display:none; flex-direction:column; position:relative; touch-action:none; user-select:none;}
+  #game{flex:1; display:none; flex-direction:column; position:relative; user-select:none; overflow-y:auto; min-height:0;}
   #topbar{
     display:flex; align-items:center; justify-content:space-between; gap:8px;
-    padding:10px 12px; background:var(--ink); color:#fff; z-index:20; flex-wrap:wrap;
+    padding:10px 12px; background:var(--ink); color:#fff; z-index:20; flex-wrap:wrap; flex-shrink:0;
   }
   .stat{display:flex; align-items:center; gap:4px; font-family:'Baloo 2'; font-size:15px; background:rgba(255,255,255,.08); padding:5px 10px; border-radius:999px;}
   .stat b{font-size:16px;}
@@ -115,13 +111,13 @@
   }
   .iconbtn:active{background:rgba(255,255,255,.25);}
 
-  #messWrap{padding:6px 12px; background:#3a2c1e; z-index:20;}
+  #messWrap{padding:6px 12px; background:#3a2c1e; z-index:20; flex-shrink:0;}
   #messLabel{font-size:11px; color:#e9dcc0; font-family:'Baloo 2'; display:flex; justify-content:space-between; margin-bottom:3px;}
   #messBar{height:8px; border-radius:99px; background:#5a4633; overflow:hidden;}
   #messFill{height:100%; width:0%; background:linear-gradient(90deg,var(--egg-yolk),var(--tomato)); transition:width .4s ease;}
 
   #stage{
-    flex:1; position:relative; overflow:hidden;
+    flex:1; position:relative; overflow:hidden; min-height:120px; touch-action:none;
     background:
       repeating-linear-gradient(45deg, rgba(0,0,0,.025) 0 2px, transparent 2px 18px),
       linear-gradient(180deg, var(--wall), #EBD79E);
@@ -179,31 +175,28 @@
 
   #aimline{position:fixed; inset:0; pointer-events:none; z-index:15;}
 
-  #bottombar{
-    z-index:20; display:flex; align-items:center; gap:10px;
-    padding:14px 16px calc(14px + env(safe-area-inset-bottom)); background:var(--ink);
-    overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none;
+  #weaponBar{
+    z-index:20; display:flex; align-items:center; justify-content:center; gap:8px; flex-shrink:0;
+    padding:6px 8px; background:var(--ink);
   }
-  #bottombar::-webkit-scrollbar{display:none;}
-  #bottombar-inner{display:flex; gap:10px; margin:0 auto; padding:0 4px;}
   .weapon{
-    width:62px; height:62px; border-radius:50%; border:3px solid #fff; font-size:27px;
+    width:38px; height:38px; border-radius:50%; border:2px solid #fff; font-size:17px;
     display:flex; align-items:center; justify-content:center; cursor:pointer; position:relative;
-    box-shadow:0 4px 0 rgba(0,0,0,.35); transition:transform .1s; flex-shrink:0;
+    box-shadow:0 3px 0 rgba(0,0,0,.35); transition:transform .1s; flex-shrink:0;
   }
   .weapon.egg{background:var(--egg-yolk);}
   .weapon.tomato{background:var(--tomato);}
   .weapon.poop{background:#a9714a;}
   .weapon.paint{background:conic-gradient(from 0deg, #ff5e5e, #ffd84d, #4cc9f0, #7b5cff, #ff5e5e);}
   .weapon.cake{background:linear-gradient(160deg, #ffd9e8 55%, #fff 55%);}
-  .weapon.active{outline:3px solid #fff; transform:translateY(-4px); box-shadow:0 8px 0 rgba(0,0,0,.35);}
-  .weapon .badge{position:absolute; bottom:-6px; right:-6px; background:#fff; color:var(--ink); font-family:'Baloo 2'; font-size:12px; padding:2px 6px; border-radius:999px; border:2px solid var(--ink);}
-  #hint{color:#e9dcc0; font-family:'Baloo 2'; font-size:12.5px; text-align:center; padding:0 10px 6px; z-index:20;}
+  .weapon.active{outline:2px solid #fff; transform:translateY(-3px); box-shadow:0 6px 0 rgba(0,0,0,.35);}
+  .weapon .badge{position:absolute; bottom:-5px; right:-5px; background:#fff; color:var(--ink); font-family:'Baloo 2'; font-size:9px; padding:1px 4px; border-radius:999px; border:1.5px solid var(--ink);}
+  #hint{color:#e9dcc0; font-family:'Baloo 2'; font-size:12.5px; text-align:center; padding:0 10px 6px; z-index:20; flex-shrink:0;}
 
   #rewardAdBtn{
     display:block; margin:0 auto 8px; padding:8px 16px; border:none; border-radius:999px;
     background:linear-gradient(90deg,#FFD84D,#FFB84D); color:var(--ink); font-family:'Baloo 2';
-    font-weight:800; font-size:13px; box-shadow:0 3px 0 #C98A1F; cursor:pointer; z-index:20;
+    font-weight:800; font-size:13px; box-shadow:0 3px 0 #C98A1F; cursor:pointer; z-index:20; flex-shrink:0;
   }
   #rewardAdBtn:active{ transform:translateY(2px); box-shadow:0 1px 0 #C98A1F; }
   #rewardAdBtn.hidden{ display:none; }
@@ -251,10 +244,10 @@
 
     <button id="startBtn" disabled>🎯 Start Game</button>
 
+    <a href="https://buymeacoffee.com/mastex" target="_blank" rel="noopener" id="coffeeLink">☕ Buy me a coffee</a>
+
     <input type="file" id="photoInput" accept="image/*" multiple>
     <input type="file" id="musicInput" accept="audio/*">
-
-    <a id="coffeeLink" href="https://buymeacoffee.com/mastex" target="_blank" rel="noopener noreferrer">☕ Buy me a coffee</a>
   </section>
 
   <!-- ============ GAME ============ -->
@@ -276,19 +269,17 @@
       <div id="messBar"><div id="messFill"></div></div>
     </div>
 
+    <div id="weaponBar">
+      <div class="weapon egg active" id="weaponEgg" data-type="egg">🥚<span class="badge">1</span></div>
+      <div class="weapon tomato" id="weaponTomato" data-type="tomato">🍅<span class="badge">2</span></div>
+      <div class="weapon poop" id="weaponPoop" data-type="poop">💩<span class="badge">3</span></div>
+      <div class="weapon paint" id="weaponPaint" data-type="paint">🎨<span class="badge">4</span></div>
+      <div class="weapon cake" id="weaponCake" data-type="cake">🍰<span class="badge">5</span></div>
+    </div>
+
     <div id="stage"></div>
     <div id="hint">Tap the screen to throw at the target</div>
     <button id="rewardAdBtn" type="button">🎬 Watch an ad, ✨ earn Gold Mode (20s)</button>
-
-    <div id="bottombar">
-      <div id="bottombar-inner">
-        <div class="weapon egg active" id="weaponEgg" data-type="egg">🥚<span class="badge">1</span></div>
-        <div class="weapon tomato" id="weaponTomato" data-type="tomato">🍅<span class="badge">2</span></div>
-        <div class="weapon poop" id="weaponPoop" data-type="poop">💩<span class="badge">3</span></div>
-        <div class="weapon paint" id="weaponPaint" data-type="paint">🎨<span class="badge">4</span></div>
-        <div class="weapon cake" id="weaponCake" data-type="cake">🍰<span class="badge">5</span></div>
-      </div>
-    </div>
   </section>
 
   <div id="musicToast">🎵 Music playing</div>
