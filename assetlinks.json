@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "com.mastexpowerdesign.splat",
+        "sha256_cert_fingerprints": ["1D:05:68:DD:CE:E4:D4:21:B9:4A:B3:6F:8E:48:F9:B6:2C:E0:83:97:55:81:6C:A9:B0:58:F4:12:F8:00:BE:7E"]
+      }
+    }]
