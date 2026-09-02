@@ -1,8 +1,12 @@
-[{
-      "relation": ["delegate_permission/common.handle_all_urls"],
-      "target": {
-        "namespace": "android_app",
-        "package_name": "com.mastexpowerdesign.splat",
-        "sha256_cert_fingerprints": ["1D:05:68:DD:CE:E4:D4:21:B9:4A:B3:6F:8E:48:F9:B6:2C:E0:83:97:55:81:6C:A9:B0:58:F4:12:F8:00:BE:7E"]
-      }
-    }]
+
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.mastexpowerdesign.splat",
+      "sha256_cert_fingerprints":
+        ["1C:8B:01:E7:8C:79:0C:88:21:30:BD:4F:7A:51:26:DD:7E:1E:79:4A:E8:9A:B5:B5:B4:6F:67:80:CD:DD:6B:39"]
+    }
+  }
+]
